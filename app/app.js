@@ -2,7 +2,6 @@
 (function() {
     var app = angular.module('solarCalc', ['config']);
     
-    var restAPI = config.restAPI;
     var coordRegExp = /(\-?)(\d{1,2})\:(\d{1,2})\:(\d{1,2}\.\d)/;
     var coordFormat = '$1$2°$3′$4″';
     var iso8601RegExp = /(\d{4})-(\d{2})-(\d{2})T(\d{2})\:(\d{2})\:(\d{2})([+-])(\d{2})\:(\d{2})/;
@@ -98,18 +97,18 @@
       };
     });
 
-    app.controller('CalcController', ['$http', function($http) {
+    app.controller('CalcController', ['$http', 'config', function($http, config) {
       this.location_info = null;
       this.stats = null;
       var ctrl = this;
 
       this.fetchCity = function(city) {
-        this.location_info = 'fetching...';
+        this.location_info = null;
 
-        $http.get(restAPI + '/location?city=' + city).then(function(data) {
+        $http.get(config.restAPI + '/location?city=' + city).then(function(data) {
           ctrl.location_info = data.data;
           // We have basic location information, so let us fetch also stats
-          $http.get(restAPI + '/stats?city=' + city).then(function(data) {
+          $http.get(config.restAPI + '/stats?city=' + city).then(function(data) {
             ctrl.stats = data.data;
           }, function(err) {
             ctrl.stats = null;
@@ -120,21 +119,12 @@
       };
     }]);
 
-    app.controller('LocationFormController', ['$http', function($http) {
+    app.controller('LocationFormController', ['$http', 'config', function($http, config) {
       var ctrl = this;
       this.city = null; 
-      this.cities = {'cities': [
-        {'name': 'Helsinki',
-          'lat': '24.9382401',
-          'lon': '60.1698125',
-          'elev': '7.153307'},
-        {'name': 'Budapest',
-          'lat': '47.4984056',
-          'lon': '19.0407578',
-          'elev': '106.463295'}
-        ]};
+      this.cities = {};
         
-      $http.get(restAPI + '/cities').then(function(data) {
+      $http.get(config.restAPI + '/cities').then(function(data) {
         ctrl.cities = data.data;
       }, function(err) {
         console.log('Failed to read in city data from REST API: ' + err);
