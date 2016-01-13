@@ -29,29 +29,24 @@
           <img src="static/img/sundial.jpg" class="img-responsive">
         </div>
 
-        <div class="col-md-8">
+        <div class="col-md-4">
           <h2 class="sub-header">Solar Calculator</h2>
           <h3>Select location</h3>
-          <form name="locationForm" ng-controller="LocationFormController as formCtrl" ng-submit="calcCtrl.fetchCity(formCtrl.city)" novalidate>
-            <select ng-model="formCtrl.city" required>
+          <form name="locationForm" ng-controller="LocationFormController as formCtrl" ng-submit="calcCtrl.fetchCity(formCtrl.city)" class="form-inline" novalidate>
+            <p><em>{{ formCtrl.statusMsg }}</em></p>
+            <label for="city" class="sr-only">City</label>
+            <select ng-model="formCtrl.city" class="form-control" id="city" required>
               <option ng-repeat="city in formCtrl.cities.cities | orderBy:'name'" value="{{city.name}}">{{city.name}}</option>
             </select>
-            <input type="submit" value="Submit" />
+            <input type="submit" value="Select" class="btn btn-primary" />
+            <input type="reset" value="Reset" ng-click="calcCtrl.resetCity() && formCtrl.resetCity()" class="btn btn-default" />
           </form>
-
-          <div ng-show="calcCtrl.location_info">
-            Quick stats
-          </div>
-
         </div><!-- col /-->
+        <div class="col-md-4">
+          <p>{{ calcCtrl.city }}</p>
+        </div>
       </div><!-- row /-->
     </section>
-
-    <div class="row">
-      <div class="col-md-8 col-md-offset-2">
-        Quick stats
-      </div>
-    </div>
 
     <section ng-show="calcCtrl.location_info" ng-init="tab = 'locinfo'">
       <ul class="nav nav-pills">
@@ -98,10 +93,11 @@
 
       <div class="panel" ng-show="tab === 'statsyear'">
         <div class="table-responsive">
-          <table class="table table-striped">
+          <table class="table table-striped table-condensed">
             <thead>
               <tr>
                 <th>Day #</th>
+                <th>Date</th>
                 <th>Sunrise</th>
                 <th>Solar noon</th>
                 <th>Sunset</th>
@@ -111,6 +107,7 @@
             <tbody>
               <tr ng-repeat="day in calcCtrl.stats.days">
                 <td>{{ day.daynumber }}</td>
+                <td>{{ day.stats.noon | isodate:'dateonly' }}</td>
                 <td>{{ day.stats.sunrise | isodate:'short' }}</td>
                 <td>{{ day.stats.solarnoon | isodate:'short' }}</td>
                 <td>{{ day.stats.sunset | isodate:'short' }}</td>

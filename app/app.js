@@ -7,6 +7,7 @@
     var iso8601RegExp = /(\d{4})-(\d{2})-(\d{2})T(\d{2})\:(\d{2})\:(\d{2})([+-])(\d{2})\:(\d{2})/;
     var dateFormat =  '$3.$2.$1 $4:$5:$6 (UTC$7$8:$9)';
     var dateFormatShort = '$4:$5:$5';
+    var dateOnlyFormat = '$3.$2.$1';
     var degreeRegExp = /(\-?\d{1,2})\:(\d{1,2})\:(\d{1,2}\.\d)/;
     var hourAngleRegExp = /(\-?\d{1,2})\:(\d{1,2})\:(\d{1,2}\.\d)/;
     var hourRegExp = /(\-?\d{1,2})\:(\d{1,2})\:(\d{1,2})/;
@@ -48,6 +49,9 @@
         if (input === undefined) return;
         if (format === 'short') {
           input = input.replace(iso8601RegExp, dateFormatShort);
+        }
+        else if ( format === 'dateonly') {
+          input = input.replace(iso8601RegExp, dateOnlyFormat);  
         }
         else {
           input = input.replace(iso8601RegExp, dateFormat);
@@ -100,9 +104,11 @@
     app.controller('CalcController', ['$http', 'config', function($http, config) {
       this.location_info = null;
       this.stats = null;
+      this.city = null;
       var ctrl = this;
 
       this.fetchCity = function(city) {
+        this.city = city;
         this.location_info = null;
 
         $http.get(config.restAPI + '/location?city=' + city).then(function(data) {
@@ -117,16 +123,29 @@
           ctrl.location_info = null;
         });
       };
+      
+      this.resetCity = function() {
+        this.city = null;
+        this.location_info = null;
+        this.stats = null;
+      };
     }]);
 
     app.controller('LocationFormController', ['$http', 'config', function($http, config) {
       var ctrl = this;
       this.city = null; 
       this.cities = {};
-        
+      this.statusMsg = 'Fetching cities...';
+      
+      this.resetCity = function() {
+        this.city = null;
+      };
+
       $http.get(config.restAPI + '/cities').then(function(data) {
         ctrl.cities = data.data;
+        ctrl.statusMsg = 'Select a city from the list';
       }, function(err) {
+        ctrl.statusMsg = 'Fetching cities failed.';
         console.log('Failed to read in city data from REST API: ' + err);
       });
     }]);
