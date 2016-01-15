@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<!--[if lt IE 7]>      <html lang="en" ng-app="solarCalc" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
-<!--[if IE 7]>         <html lang="en" ng-app="solarCalc" class="no-js lt-ie9 lt-ie8"> <![endif]-->
-<!--[if IE 8]>         <html lang="en" ng-app="solarCalc" class="no-js lt-ie9"> <![endif]-->
-<!--[if gt IE 8]><!--> <html lang="en" ng-app="solarCalc" class="no-js"> <!--<![endif]-->
+<!--[if lt IE 7]>      <html lang="en" ng-app="solarcalc" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html lang="en" ng-app="solarcalc" class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html lang="en" ng-app="solarcalc" class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html lang="en" ng-app="solarcalc" class="no-js"> <!--<![endif]-->
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -13,7 +13,6 @@
   <link rel="stylesheet" href="bower_components/html5-boilerplate/dist/css/main.css">
   <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css">
   <link rel="stylesheet" href="app.css">
-  <script src="bower_components/html5-boilerplate/dist/js/vendor/modernizr-2.8.3.min.js"></script>
 </head>
 <body ng-controller="CalcController as calcCtrl">
 
@@ -32,14 +31,14 @@
         <div class="col-md-4">
           <h2 class="sub-header">Solar Calculator</h2>
           <h3>Select location</h3>
-          <form name="locationForm" ng-controller="LocationFormController as formCtrl" ng-submit="calcCtrl.fetchCity(formCtrl.city)" class="form-inline" novalidate>
+          <form name="locationForm" ng-controller="LocationFormController as formCtrl" ng-submit="formCtrl.setCity()" class="form-inline" novalidate>
             <p><em>{{ formCtrl.statusMsg }}</em></p>
             <label for="city" class="sr-only">City</label>
-            <select ng-model="formCtrl.city" class="form-control" id="city" required>
+            <select ng-model="formCtrl.city" class="form-control" required>
               <option ng-repeat="city in formCtrl.cities.cities | orderBy:'name'" value="{{city.name}}">{{city.name}}</option>
             </select>
             <input type="submit" value="Select" class="btn btn-primary" />
-            <input type="reset" value="Reset" ng-click="calcCtrl.resetCity() && formCtrl.resetCity()" class="btn btn-default" />
+            <input type="reset" value="Reset" ng-click="formCtrl.resetCity()" class="btn btn-default" />
           </form>
         </div><!-- col /-->
         <div class="col-md-4">
@@ -48,23 +47,24 @@
       </div><!-- row /-->
     </section>
 
-    <section ng-show="calcCtrl.location_info" ng-init="tab = 'locinfo'">
+    <section ng-show="calcCtrl.loc.location_info" ng-init="tab = 'locinfo'">
       <ul class="nav nav-pills">
         <li><a href ng-click="tab = 'locinfo'">Location information</a></li>
         <li><a href ng-click="tab = 'suntoday'">Current sun position</a></li>
         <li><a href ng-click="tab = 'statstoday'">Sun statistics today</a></li>
         <li><a href ng-click="tab = 'statsyear'">Year stats</a></li>
+        <li><a href ng-click="tab = 'charts'">Charts</a></li>
       </ul>
       
       <div class="panel" ng-show="tab === 'locinfo'">
         <h3>Location information</h3>
         <dl class="dl-horizontal">
-          <dt>Latitude</dt><dd>{{ calcCtrl.location_info.observer.lat | coordLat }}</dd>
-          <dt>Longitude</dt><dd>{{ calcCtrl.location_info.observer.lon | coordLon }}</dd>
-          <dt>Elevation</dt><dd>{{ calcCtrl.location_info.observer.elevation | round }} m</dd>
-          <dt>Timezone</dt><dd>{{ calcCtrl.location_info.observer.timezone }}</dd>
-          <dt>Date</dt><dd>{{ calcCtrl.location_info.observer.date | isodate}}</dd>
-          <dt>Local solar date</dt><dd>{{ calcCtrl.location_info.observer.solartime | isodate }}</dd>
+          <dt>Latitude</dt><dd>{{ calcCtrl.loc.location_info.observer.lat | coordLat }}</dd>
+          <dt>Longitude</dt><dd>{{ calcCtrl.loc.location_info.observer.lon | coordLon }}</dd>
+          <dt>Elevation</dt><dd>{{ calcCtrl.loc.location_info.observer.elevation | round }} m</dd>
+          <dt>Timezone</dt><dd>{{ calcCtrl.loc.location_info.observer.timezone }}</dd>
+          <dt>Date</dt><dd>{{ calcCtrl.loc.location_info.observer.date | isodate}}</dd>
+          <dt>Local solar date</dt><dd>{{ calcCtrl.loc.location_info.observer.solartime | isodate }}</dd>
         </dl>
       </div><!-- panel /-->
 
@@ -72,22 +72,22 @@
         <h3>Current sun position</h3>
         <dl class="dl-horizontal">
           <h4>Apparent topocentric position</h4>
-          <dt>Right ascension</dt><dd>{{ calcCtrl.location_info.sun.ra | hourangle }}</dd>
-          <dt>Declination</dt><dd>{{ calcCtrl.location_info.sun.dec | degree }}</dd>
+          <dt>Right ascension</dt><dd>{{ calcCtrl.loc.location_info.sun.ra | hourangle }}</dd>
+          <dt>Declination</dt><dd>{{ calcCtrl.loc.location_info.sun.dec | degree }}</dd>
           <h4>Position relative to horizon</h4>
-          <dt>Azimuth east of north</dt><dd>{{ calcCtrl.location_info.sun.az | degree }}</dd>
-          <dt>Altitude above horizon</dt><dd>{{ calcCtrl.location_info.sun.alt | degree }}</dd>
+          <dt>Azimuth east of north</dt><dd>{{ calcCtrl.loc.location_info.sun.az | degree }}</dd>
+          <dt>Altitude above horizon</dt><dd>{{ calcCtrl.loc.location_info.sun.alt | degree }}</dd>
         </dl>
       </div><!-- panel /-->
 
       <div class="panel" ng-show="tab === 'statstoday'">
         <h3>Sun statistics for today</h3>
         <dl class="dl-horizontal">
-          <dt>Noon (in GMT)</dt><dd>{{ calcCtrl.location_info.stats.noon | isodate }}</dd>
-          <dt>Solarnoon</dt><dd>{{ calcCtrl.location_info.stats.solarnoon | isodate }}</dd>
-          <dt>Sunrise</dt><dd>{{ calcCtrl.location_info.stats.sunrise | isodate }}</dd>
-          <dt>Sunset</dt><dd>{{ calcCtrl.location_info.stats.sunset | isodate }}</dd>
-          <dt>Day length</dt><dd>{{ calcCtrl.location_info.stats.daylength | hours }}</dd>
+          <dt>Noon (in GMT)</dt><dd>{{ calcCtrl.loc.location_info.stats.noon | isodate }}</dd>
+          <dt>Solarnoon</dt><dd>{{ calcCtrl.loc.location_info.stats.solarnoon | isodate }}</dd>
+          <dt>Sunrise</dt><dd>{{ calcCtrl.loc.location_info.stats.sunrise | isodate }}</dd>
+          <dt>Sunset</dt><dd>{{ calcCtrl.loc.location_info.stats.sunset | isodate }}</dd>
+          <dt>Day length</dt><dd>{{ calcCtrl.loc.location_info.stats.daylength | hours }}</dd>
         </dl>
       </div><!-- panel /-->
 
@@ -105,7 +105,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr ng-repeat="day in calcCtrl.stats.days">
+              <tr ng-repeat="day in calcCtrl.loc.stats.days">
                 <td>{{ day.daynumber }}</td>
                 <td>{{ day.stats.noon | isodate:'dateonly' }}</td>
                 <td>{{ day.stats.sunrise | isodate:'short' }}</td>
@@ -117,7 +117,18 @@
           </table>
         </div><!-- table responsive /-->
       </div><!-- panel /-->
-
+      
+      <div class="panel" ng-show="tab === 'charts'" ng-controller="LineChartController as lineChartCtrl">
+        <canvas 
+          id="line" 
+          class="chart chart-line" 
+          chart-data="lineChartCtrl.data" 
+          chart-labels="lineChartCtrl.labels" 
+          chart-legend="true" 
+          chart-series="lineChartCtrl.series" 
+          chart-click="lineChartCtrl.onClick">
+        </canvas>
+      </div><!-- panel /-->
     </section>
 
   </div>
@@ -131,11 +142,15 @@
   <!-- In production use:
   <script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
   -->
+  <script src="bower_components/html5-boilerplate/dist/js/vendor/modernizr-2.8.3.min.js"></script>
   <script src="bower_components/angular/angular.js"></script>
   <script src="bower_components/angular-route/angular-route.js"></script>
   <script src="bower_components/jquery/dist/jquery.js"></script>
   <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
+  <script src="bower_components/Chart.js/Chart.js"></script>
+  <script src="bower_components/angular-chart.js/dist/angular-chart.js"></script>
   <script src="config.js"></script>
+  <script src="chart.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

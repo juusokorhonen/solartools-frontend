@@ -1,6 +1,6 @@
 'use strict';
 (function() {
-    var app = angular.module('solarCalc', ['config']);
+    var app = angular.module('solarcalc', ['config', 'charts']);
     
     var coordRegExp = /(\-?)(\d{1,2})\:(\d{1,2})\:(\d{1,2}\.\d)/;
     var coordFormat = '$1$2°$3′$4″';
@@ -101,44 +101,88 @@
       };
     });
 
-    app.controller('CalcController', ['$http', 'config', function($http, config) {
+    app.service('loc', ['$http', 'config', function($http, config) {
+      var serv = this;
       this.location_info = null;
       this.stats = null;
       this.city = null;
-      var ctrl = this;
 
-      this.fetchCity = function(city) {
-        this.city = city;
-        this.location_info = null;
+      this.setCity = function(city) {
+        if (city == null) {
+          this.resetCity();
+          return;
+        }
+        serv.city = city;
+        serv.loction_info = null;
+        serv.stats = null;
 
+        // Now fetch the city from REST API
         $http.get(config.restAPI + '/location?city=' + city).then(function(data) {
-          ctrl.location_info = data.data;
+          serv.setLocationInfo(data.data);
+          console.log('Location set for city: ' + city);
           // We have basic location information, so let us fetch also stats
           $http.get(config.restAPI + '/stats?city=' + city).then(function(data) {
-            ctrl.stats = data.data;
+            serv.setStats(data.data);
+            console.log('Stats set for city: ' + city);
           }, function(err) {
-            ctrl.stats = null;
+            console.log('Failed to set stats: ' + err);
           });
         }, function(err) {
-          ctrl.location_info = null;
+          console.log('Failed to set location: ' + err);
         });
+        console.log('City set to : ' + serv.city);
       };
-      
+
       this.resetCity = function() {
-        this.city = null;
-        this.location_info = null;
-        this.stats = null;
+        serv.city = null;
+        serv.location_info = null;
+        serv.stats = null;
+        console.log('City reset');
+      };
+
+      this.setLocationInfo = function(newLocationInfo) {
+        serv.location_info = newLocationInfo;
+        console.log('Location info set for city: ' + this.city);
+      };
+
+      this.setStats = function(newStats) {
+        serv.stats = newStats;
+        console.log('Stats set for city: ' + this.city);
+      };
+
+      return {
+        setCity: this.setCity,
+        resetCity: this.resetCity,
+        city: this.city,
+        location_info: this.location_info,
+        stats: this.stats
       };
     }]);
 
-    app.controller('LocationFormController', ['$http', 'config', function($http, config) {
+    app.controller('CalcController', ['$http', 'config', 'loc', function($http, config, loc) {
       var ctrl = this;
-      this.city = null; 
-      this.cities = {};
-      this.statusMsg = 'Fetching cities...';
+
+      this.setCity = function(city) {
+        loc.setCity(city);
+      };
       
       this.resetCity = function() {
-        this.city = null;
+        loc.resetCity(); 
+      };
+    }]);
+
+    app.controller('LocationFormController', ['$http', 'config', 'loc', function($http, config, loc) {
+      var ctrl = this;
+      this.city = null; // this is where the form saves the city
+      this.cities = {};
+      this.statusMsg = 'Fetching cities...';
+     
+      this.setCity = function() {
+        loc.setCity(this.city);
+      };
+
+      this.resetCity = function() {
+        loc.resetCity();
       };
 
       $http.get(config.restAPI + '/cities').then(function(data) {
