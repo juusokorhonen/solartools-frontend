@@ -4,7 +4,7 @@
 
   config.factory('config', function() {
     return {
-      restAPI: 'https://tranquil-wildwood-8965.herokuapp.com'
+      restAPI: 'https://localhost:5000'
     };
   });
 
