@@ -146,7 +146,8 @@
         ctrl.statusMsg = 'Select a city from the list';
       }, function(err) {
         ctrl.statusMsg = 'Fetching cities failed.';
-        console.log('Failed to read in city data from REST API: ' + err);
+        console.log('Failed to read in city data from REST API: ');
+        console.log(err)
       });
     }]);
 

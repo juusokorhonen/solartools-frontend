@@ -4,7 +4,7 @@
 
   config.factory('config', function() {
     return {
-      restAPI: 'https://localhost:5000'
+      restAPI: 'http://localhost:5000'
     };
   });
 
