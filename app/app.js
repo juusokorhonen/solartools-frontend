@@ -1,6 +1,6 @@
 'use strict';
 (function() {
-    var app = angular.module('solarCalc', ['config']);
+    var app = angular.module('solarcalc', ['config', 'charts']);
     
     var coordRegExp = /(\-?)(\d{1,2})\:(\d{1,2})\:(\d{1,2}\.\d)/;
     var coordFormat = '$1$2°$3′$4″';
@@ -101,52 +101,123 @@
       };
     });
 
-    app.controller('CalcController', ['$http', 'config', function($http, config) {
-      this.location_info = null;
-      this.stats = null;
-      this.city = null;
-      var ctrl = this;
+    app.service('loc', ['$rootScope', '$http', 'config', function($rootScope, $http, config) {
+      var serv = this;
+      var _location_info = null;
+      var _stats = null;
+      var _city = null;
 
-      this.fetchCity = function(city) {
-        this.city = city;
-        this.location_info = null;
+      var setCity = function(city) {
+        if (city == null) {
+          resetCity();
+          return;
+        }
+        _city = city;
+        $rootScope.$broadcast('CityChanged', _city);
 
+        // Now fetch the city from REST API
         $http.get(config.restAPI + '/location?city=' + city).then(function(data) {
-          ctrl.location_info = data.data;
+          setLocationInfo(data.data);
+          console.log('Location info fetched successfully for city: ' + city);
           // We have basic location information, so let us fetch also stats
           $http.get(config.restAPI + '/stats?city=' + city).then(function(data) {
-            ctrl.stats = data.data;
+            setStats(data.data);
+            console.log('Stats fetched successfully for city: ' + city);
           }, function(err) {
-            ctrl.stats = null;
+            console.log('Failed to fetch stats for city: ' + err);
           });
         }, function(err) {
-          ctrl.location_info = null;
+          console.log('Failed to fetch location info for city: ' + err);
         });
+        console.log('City set to : ' + _city);
       };
-      
-      this.resetCity = function() {
-        this.city = null;
-        this.location_info = null;
-        this.stats = null;
+
+      var resetCity = function() {
+        _city = null;
+        _location_info = null;
+        _stats = null;
+        $rootScope.$broadcast('CityReset');
+        console.log('City reset');
+      };
+
+      var setLocationInfo = function(location_info) {
+        _location_info = location_info;
+        $rootScope.$broadcast('LocationInfoChanged', _location_info);
+        console.log('Location info set for city: ' + _city);
+        console.log(_location_info);
+      };
+
+      var setStats = function(stats) {
+        _stats = stats;
+        $rootScope.$broadcast('StatsChanged', _stats);
+        console.log('Stats set for city: ' + _city);
+        console.log(_stats);
+      };
+
+      return {
+        setCity: setCity,
+        resetCity: resetCity,
       };
     }]);
 
-    app.controller('LocationFormController', ['$http', 'config', function($http, config) {
-      var ctrl = this;
-      this.city = null; 
-      this.cities = {};
-      this.statusMsg = 'Fetching cities...';
+    app.controller('CalcController', ['$scope', '$http', 'config', 'loc', function($scope, $http, config, loc) {
+      $scope.city = null;
+      $scope.location_info = null;
+      $scope.stats = null;
+
+      $scope.setCity = function(city) {
+        loc.setCity(city);
+      };
       
-      this.resetCity = function() {
-        this.city = null;
+      $scope.resetCity = function() {
+        loc.resetCity(); 
+      };
+
+      $scope.$on('CityReset', function(event) {
+        $scope.city = null;
+        $scope.location_info = null;
+        $scope.stats = null;
+        console.log('CalcController received CityReset event');
+      });
+
+      $scope.$on('CityChanged', function(event, city) {
+        $scope.city = city;
+        console.log('CalcController received CityChanged event: ');
+        console.log(city);
+      });
+
+      $scope.$on('LocationInfoChanged', function(event, location_info) {
+        $scope.location_info = location_info;
+        console.log('CalcController received LocationInfoChanged event: ');
+        console.log(location_info);
+      });
+
+      $scope.$on('StatsChanged', function(event, stats) {
+        $scope.stats = stats;
+        console.log('CalcController received StatsChanged event: ');
+        console.log(stats);
+      });
+    }]);
+
+    app.controller('LocationFormController', ['$scope', '$http', 'config', 'loc', function($scope, $http, config, loc) {
+      $scope.city = null; // this is where the form saves the city
+      $scope.cities = {};
+      $scope.statusMsg = 'Fetching cities...';
+     
+      $scope.setCity = function(city) {
+        loc.setCity(city);
+      };
+
+      $scope.resetCity = function() {
+        loc.resetCity();
       };
 
       $http.get(config.restAPI + '/cities').then(function(data) {
-        ctrl.cities = data.data;
-        ctrl.statusMsg = 'Select a city from the list';
+        $scope.cities = data.data;
+        $scope.statusMsg = 'Select a city from the list';
       }, function(err) {
-        ctrl.statusMsg = 'Fetching cities failed.';
-        console.log('Failed to read in city data from REST API: ');
+        $scope.statusMsg = 'Fetching cities failed.';
+        console.log('Failed to read in city data from REST API: ' + err);
         console.log(err)
       });
     }]);
